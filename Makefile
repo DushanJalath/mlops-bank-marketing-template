@@ -9,12 +9,15 @@ doctor:  ## check that everything the workshop needs is ready
 	@echo "=== DagsHub secrets ==="
 	@test -n "$$DAGSHUB_OWNER" || (echo "DAGSHUB_OWNER is not set (Codespaces secret)" && exit 1)
 	@test -n "$$DAGSHUB_TOKEN" || (echo "DAGSHUB_TOKEN is not set (Codespaces secret)" && exit 1)
-	@uv run python -c "from src import tracking; import mlflow; tracking.configure(); \
+	@uv run python -c "import os, sys, mlflow; \
+		o, t = os.environ['DAGSHUB_OWNER'], os.environ['DAGSHUB_TOKEN']; r = os.environ.get('DAGSHUB_REPO') or 'mlops-bank-marketing'; \
+		sys.exit('DAGSHUB_OWNER or DAGSHUB_TOKEN contains a hidden space or line break: retype the secret') if (o != o.strip() or t != t.strip()) else None; \
+		os.environ.update(MLFLOW_TRACKING_URI=f'https://dagshub.com/{o}/{r}.mlflow', MLFLOW_TRACKING_USERNAME=o, MLFLOW_TRACKING_PASSWORD=t); \
 		mlflow.search_experiments(max_results=1); print('MLflow OK:', mlflow.get_tracking_uri())"
 	@echo "=== All checks passed ==="
 
 dvc-auth:  ## point DVC at YOUR DagsHub repo and store your login (in .dvc/config.local, not in git)
-	uv run dvc remote modify origin --local url "https://dagshub.com/$$DAGSHUB_OWNER/mlops-bank-marketing.dvc"
+	uv run dvc remote modify origin --local url "https://dagshub.com/$$DAGSHUB_OWNER/$${DAGSHUB_REPO:-mlops-bank-marketing}.dvc"
 	uv run dvc remote modify origin --local auth basic
 	uv run dvc remote modify origin --local user "$$DAGSHUB_OWNER"
 	uv run dvc remote modify origin --local password "$$DAGSHUB_TOKEN"
