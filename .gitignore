@@ -7,6 +7,7 @@ mlruns/
 mlflow.db
 catboost_info/
 monitoring/*.csv
+data/raw/
 monitoring/*.json
 monitoring/*.html
 gate_report.md
